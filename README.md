@@ -6,11 +6,12 @@ The models are evaluated on the **Intel Scene Classification** dataset using six
 
 ## Notebooks and assignment
 
-- **[Main notebook — `notebooks/code.ipynb`](notebooks/code.ipynb)**
-- [Additional notebook copy — `notebooks/code (2).ipynb`](notebooks/code%20%282%29.ipynb)
+- **[Final submission notebook — `notebooks/final_notebook.ipynb`](notebooks/final_notebook.ipynb)**
+- [Earlier notebook — `notebooks/code.ipynb`](notebooks/code.ipynb)
+- [Additional earlier notebook — `notebooks/code (2).ipynb`](notebooks/code%20%282%29.ipynb)
 - [Assignment brief](EN3150_Assignment_03_In23.pdf)
 
-> Both notebook files are currently in the repository. Use `notebooks/code.ipynb` as the primary entry point; the additional copy is included for reference.
+> **Use `notebooks/final_notebook.ipynb` for the final submission.** The other notebooks are retained as earlier versions for reference.
 
 ## Dataset
 
@@ -102,8 +103,9 @@ EN3150_Assignment_03/
 ├── README.md
 ├── .gitignore
 ├── notebooks/
-│   ├── code.ipynb
-│   └── code (2).ipynb
+│   ├── final_notebook.ipynb   # Final submission
+│   ├── code.ipynb             # Earlier version
+│   └── code (2).ipynb         # Earlier version
 ├── archive/
 │   └── intel_64_split/
 ├── saved_models/
@@ -129,7 +131,7 @@ EN3150_Assignment_03/
 
 ## Running the experiments
 
-1. Open [`notebooks/code.ipynb`](notebooks/code.ipynb) in Jupyter or Google Colab. A GPU runtime is recommended for the pretrained experiments.
+1. Open [`notebooks/final_notebook.ipynb`](notebooks/final_notebook.ipynb) in Jupyter or Google Colab. A GPU runtime is recommended for the pretrained experiments.
 2. Ensure the six-class dataset is available under `archive/intel_64_split/` and adjust the dataset location if your runtime uses a different working directory.
 3. Install the required Python packages, including TensorFlow/Keras, NumPy, pandas, Matplotlib, scikit-learn, and Pillow.
 4. Run the sections relevant to the experiment you want to reproduce. ImageNet-pretrained models may need to download weights during initialization.
