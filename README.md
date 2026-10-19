@@ -1,72 +1,68 @@
-# EN3150 — Assignment 03: CNN-Based Scene Classification
+# EN3150 Assignment 03 — CNN-Based Scene Classification
 
-A comparative study of convolutional neural networks for image classification, with an emphasis on the trade-off between classification accuracy and computational resources.
+A study of **image classification with convolutional neural networks (CNNs)**, covering custom CNN architectures, optimizer experiments, transfer learning, and the trade-off between accuracy and computational resources.
 
-The project uses the **Intel Scene Classification** dataset to train two custom CNN architectures and evaluate two ImageNet-pretrained networks. The final experiments compare predictive performance, model size, computational cost, and GPU inference speed.
+The models are evaluated on the **Intel Scene Classification** dataset using six scene categories: `buildings`, `forest`, `glacier`, `mountain`, `sea`, and `street`.
 
-## Project overview
+## Notebooks and assignment
 
-The experiments are organized into six tasks, covering dataset preparation, custom CNN development, optimizer experiments, model training and evaluation, transfer learning, and resource-aware model comparison.
+- **[Main notebook — `notebooks/code.ipynb`](notebooks/code.ipynb)**
+- [Additional notebook copy — `notebooks/code (2).ipynb`](notebooks/code%20%282%29.ipynb)
+- [Assignment brief](EN3150_Assignment_03_In23.pdf)
 
-| Model | Description | Test accuracy |
-|---|---|---:|
-| Model A | Standard custom CNN | 78.21% |
-| Model B | Lightweight CNN with depthwise-separable convolutions | 73.08% |
-| MobileNetV2 | ImageNet-pretrained model with fine-tuning | 85.92% |
-| EfficientNet-B0 | ImageNet-pretrained model with fine-tuning | **88.30%** |
-
-All accuracy results are from the same held-out test split of **2,556 images**.
+> Both notebook files are currently in the repository. Use `notebooks/code.ipynb` as the primary entry point; the additional copy is included for reference.
 
 ## Dataset
 
-The project uses the Intel Scene Classification dataset, with six scene categories:
-
-- `buildings`
-- `forest`
-- `glacier`
-- `mountain`
-- `sea`
-- `street`
-
-Images are resized to **64 × 64 pixels** and stored as RGB images. The dataset is divided using a stratified **70% / 15% / 15%** train/validation/test split (random seed: `42`).
+Images were resized to **64 × 64 RGB** and split into training, validation, and test sets using a stratified **70% / 15% / 15%** split (seed `42`).
 
 | Split | Images |
-|---|---:|
+|:--|--:|
 | Training | 11,923 |
 | Validation | 2,555 |
-| Testing | 2,556 |
+| Test | 2,556 |
 | **Total** | **17,034** |
 
-The prepared split is referenced in the notebook at `archive/intel_64_split/`. The original dataset and split must be available before running the training cells.
+The prepared data is under [`archive/intel_64_split/`](archive/intel_64_split/), with `train`, `val`, and `test` directories.
 
-## Models and experiments
+## Experiment overview
 
-### Tasks 1–4: Custom CNNs
+### Tasks 1–4 — Custom CNNs and optimizer experiments
 
-Two CNNs were developed and evaluated:
+The first experiments explore two CNN architectures:
 
-- **Model A:** A conventional CNN used as the baseline architecture.
-- **Model B:** A smaller architecture built using depthwise-separable convolutions to reduce parameter count and computation.
+- **Model A:** A conventional CNN baseline.
+- **Model B:** A compact CNN using depthwise-separable convolutions to reduce its parameter count.
 
-The notebook also explores optimizer choices, including Adam and stochastic gradient descent with different momentum settings, before training and evaluating the selected configurations.
+The notebook also compares optimizer settings and examines training behavior and classification errors. Relevant figures are available in the [`Results/`](Results/) directory.
 
-### Task 5: Transfer learning
+| Model | Test accuracy |
+|:--|--:|
+| Model A | 78.21% |
+| Model B | 73.08% |
 
-Two pretrained models were adapted to the six scene classes:
+### Task 5 — Transfer learning
 
-1. **MobileNetV2** — ImageNet weights, a new classification head, followed by fine-tuning of the final portion of the backbone.
-2. **EfficientNet-B0** — ImageNet weights and the same general two-stage transfer-learning approach.
+Two pretrained architectures were adapted to the six scene classes:
 
-In both cases, the backbone was frozen while the classification head was trained. The final **20% of backbone layers** was subsequently considered for fine-tuning, with batch-normalization layers kept frozen and a smaller learning rate used for fine-tuning.
+- **MobileNetV2:** ImageNet initialization, a new classification head, then fine-tuning of the final portion of the backbone.
+- **EfficientNet-B0:** ImageNet initialization and the same two-stage transfer-learning strategy.
 
-**Input preprocessing differs between the experiments:** the custom CNNs use normalized `[0, 1]` inputs; MobileNetV2 uses its application-specific preprocessing; and EfficientNet-B0 receives `[0, 255]` pixel values because preprocessing is incorporated into the application model. These distinctions matter when reloading models for evaluation.
+In each case, the backbone was frozen during initial head training. Fine-tuning then used a lower learning rate, with batch-normalization layers kept frozen.
 
-### Task 6: Accuracy and resource comparison
+| Pretrained model | Test accuracy |
+|:--|--:|
+| MobileNetV2 | 85.92% |
+| **EfficientNet-B0** | **88.30%** |
 
-The lightweight Model B was compared with MobileNetV2 and EfficientNet-B0 using saved checkpoints and a common input resolution.
+**Input preprocessing:** The custom CNNs receive pixel values normalized to `[0, 1]`. MobileNetV2 uses its application-specific preprocessing, while EfficientNet-B0 receives pixels in `[0, 255]` because its preprocessing is built into the application model.
+
+### Task 6 — Accuracy versus resource requirements
+
+The lightweight Model B was compared with MobileNetV2 and EfficientNet-B0 in terms of classification accuracy, model storage, theoretical computation, and measured GPU inference speed.
 
 | Metric | Model B | MobileNetV2 | EfficientNet-B0 |
-|---|---:|---:|---:|
+|:--|--:|--:|--:|
 | Test accuracy (%) | 73.08 | 85.92 | **88.30** |
 | Parameters | **20,097** | 2,422,726 | 4,214,313 |
 | Saved model size (MiB) | **0.277** | 23.302 | 35.612 |
@@ -74,70 +70,73 @@ The lightweight Model B was compared with MobileNetV2 and EfficientNet-B0 using 
 | Median batch latency (ms) | **3.091** | 13.969 | 8.924 |
 | Throughput (images/s) | **9,365.032** | 2,063.226 | 3,502.997 |
 
-**Benchmark conditions:** Google Colab NVIDIA T4 GPU, batch size **32**, input resolution **64 × 64**, 20 warm-up runs, and 100 timed runs. GPU outputs were synchronized before timing each run. The reported “time per image” in the notebook is batch latency divided by 32, not standalone single-image latency.
+The GPU timing tests used an **NVIDIA T4**, **batch size 32**, **64 × 64** inputs, **20 warm-up runs**, and **100 measurement runs**. The FLOPs figures are TensorFlow profiler estimates for one forward pass. Checkpoint sizes indicate **disk storage**, not peak runtime RAM. The measured batch latencies should not be interpreted as single-image or embedded-device latency.
 
-The FLOPs values are **TensorFlow profiler estimates** for a single forward pass. Saved `.keras` sizes describe **disk storage**, not peak runtime memory consumption.
+#### Results and visualizations
 
-### Main observations
+[Download the final comparison data (CSV)](Results/Task%206/task6_final_comparison.csv) · [Browse all Task 6 files](Results/Task%206/)
 
-- **Model B** has the smallest storage footprint and the lowest estimated arithmetic cost. It also achieved the highest throughput in this benchmark, at the expense of classification accuracy.
-- **MobileNetV2** improves accuracy considerably over Model B, while using fewer parameters and less storage than EfficientNet-B0.
-- **EfficientNet-B0** achieved the highest test accuracy. Interestingly, it also ran faster than MobileNetV2 in the T4 batch benchmark, despite having more parameters and FLOPs. GPU latency depends on operator implementation and hardware utilization, not just theoretical operation counts.
+**Accuracy versus checkpoint storage**
 
-These results illustrate why model selection depends on the target deployment constraints. Performance on a specific embedded device should be measured separately rather than inferred from Colab GPU timings.
+![Task 6 — Accuracy versus storage](Results/Task%206/task6_accuracy_vs_size.png)
 
-## Repository organization
+**GPU inference latency**
 
-The main project files are organized as follows (some files or directories may be present only after running the notebook and uploading the generated artifacts):
+![Task 6 — GPU batch latency](Results/Task%206/task6_inference_latency.png)
+
+**Estimated floating-point operations**
+
+![Task 6 — FLOPs comparison](Results/Task%206/flops_millions.png)
+
+Additional charts: [batch latency](Results/Task%206/batch_latency_ms.png) · [test accuracy](Results/Task%206/test_accuracy_%25.png).
+
+#### Interpretation
+
+Model B is by far the smallest architecture and has the lowest estimated computation and fastest GPU batch inference in this comparison. Its lower accuracy is the main drawback. MobileNetV2 improves accuracy considerably while using fewer parameters than EfficientNet-B0. EfficientNet-B0 delivers the highest accuracy and, in the T4 benchmark, runs faster than MobileNetV2 despite requiring more FLOPs. Actual inference speed depends on software kernels and hardware utilization, not just model size or operation counts.
+
+## Repository structure
 
 ```text
 EN3150_Assignment_03/
-├── code.ipynb                    # Main assignment notebook
-├── notebooks/                   # Notebook copies or organized experiments
+├── EN3150_Assignment_03_In23.pdf
+├── README.md
+├── .gitignore
+├── notebooks/
+│   ├── code.ipynb
+│   └── code (2).ipynb
 ├── archive/
-│   └── intel_64_split/          # Prepared train/val/test data
-├── saved_models/                # Saved .keras checkpoints
-├── results/
-│   └── task6/                   # Comparison CSV and figures
-└── README.md
+│   └── intel_64_split/
+├── saved_models/
+│   ├── Model_A.keras
+│   └── Model_B.keras
+└── Results/
+    ├── Model_A.png
+    ├── Model_A_Confusion_Matrix.png
+    ├── Model_B.png
+    ├── Model_B_Confusion_Matrix.png
+    ├── Optimizer_Comparison.png
+    ├── Effect_of_Momentum.png
+    └── Task 6/
+        ├── task6_final_comparison.csv
+        ├── task6_accuracy_vs_size.png
+        ├── task6_inference_latency.png
+        ├── batch_latency_ms.png
+        ├── flops_millions.png
+        └── test_accuracy_%.png
 ```
 
-If `code.ipynb` and the notebook inside `notebooks/` both exist, use the **latest finalized version** and keep them synchronized to avoid confusion.
+**Checkpoint availability:** The repository currently contains the custom Model A and Model B `.keras` files. The pretrained MobileNetV2 and EfficientNet-B0 checkpoints were saved separately during the experiments and are **not currently included in `saved_models/` on GitHub**.
 
-## Running the notebook
+## Running the experiments
 
-**Recommended environment:** Google Colab with a GPU runtime for the transfer-learning experiments. The custom CNN experiments were originally run in a local Python environment.
+1. Open [`notebooks/code.ipynb`](notebooks/code.ipynb) in Jupyter or Google Colab. A GPU runtime is recommended for the pretrained experiments.
+2. Ensure the six-class dataset is available under `archive/intel_64_split/` and adjust the dataset location if your runtime uses a different working directory.
+3. Install the required Python packages, including TensorFlow/Keras, NumPy, pandas, Matplotlib, scikit-learn, and Pillow.
+4. Run the sections relevant to the experiment you want to reproduce. ImageNet-pretrained models may need to download weights during initialization.
+5. For Task 6, provide the saved MobileNetV2 and EfficientNet-B0 checkpoint files in the paths expected by the notebook. The recorded experiment used Google Drive backups in `/content/drive/MyDrive/EN3150_Task5_Models/`.
 
-1. Clone the repository or open the finalized notebook in Colab.
-2. Make sure the prepared dataset exists at `archive/intel_64_split/` relative to the repository root.
-3. Install or import the required packages: TensorFlow/Keras, NumPy, pandas, scikit-learn, Matplotlib, and Pillow.
-4. Run the dataset and model-training sections as needed. Training the pretrained networks requires downloading ImageNet weights and may take some time.
-5. For Task 6, ensure the saved model checkpoints are available. The notebook references pretrained model backups under `/content/drive/MyDrive/EN3150_Task5_Models/`; adjust these paths if your files are elsewhere.
-6. Run the evaluation and comparison cells to reproduce the tables and figures.
-
-> **Reproducibility note:** The early custom-CNN cells were developed with local relative paths, while Tasks 5 and 6 use Colab-specific paths and Google Drive. Review these paths before running the entire notebook in a new environment. The Model B checkpoint may also need the documented Keras initializer-configuration compatibility adjustment when loaded with a newer Keras release.
-
-## Results and figures
-
-Task 6 artifacts are saved in [`results/task6/`](results/task6/) when available, including:
-
-- [`task6_final_comparison.csv`](results/task6/task6_final_comparison.csv)
-- [`task6_accuracy_vs_size.png`](results/task6/task6_accuracy_vs_size.png)
-- [`task6_inference_latency.png`](results/task6/task6_inference_latency.png)
-- [`flops_millions.png`](results/task6/flops_millions.png)
-- [`batch_latency_ms.png`](results/task6/batch_latency_ms.png)
-- [`test_accuracy_%.png`](results/task6/test_accuracy_%25.png)
-
-![Accuracy versus model storage](results/task6/task6_accuracy_vs_size.png)
-
-![GPU batch inference latency](results/task6/task6_inference_latency.png)
-
-![Estimated FLOPs](results/task6/flops_millions.png)
+> **Reproducibility notes:** Some earlier custom-CNN cells use paths from a local Windows environment, while the later tasks use Google Colab paths. Update these before running the notebook from top to bottom in a new environment. When loading `Model_B.keras` in a newer Keras release, the serialized initializer configuration may require the compatibility adjustment documented in the Task 6 workflow.
 
 ## Conclusion
 
-The lightweight custom CNN demonstrates how much model size and computational cost can be reduced with a compact architecture. Transfer learning delivers higher accuracy, with EfficientNet-B0 providing the strongest test result in these experiments. The best model depends on whether the deployment prioritizes classification accuracy, storage, compute budget, or measured latency on the target hardware.
-
----
-
-*Course: EN3150 · Assignment 03 · CNN-based image classification*
+The experiments illustrate the practical trade-off between CNN accuracy and resource consumption. The compact Model B minimizes storage and arithmetic requirements, while transfer learning improves scene-classification accuracy substantially. EfficientNet-B0 achieves the strongest test accuracy in this comparison, but the most suitable model for deployment depends on the memory, computation, latency, and accuracy constraints of the target device.
